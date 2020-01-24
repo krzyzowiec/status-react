@@ -5,11 +5,11 @@
             [reagent.core :as reagent]
             [re-frame.core :as re-frame]))
 
-(def initial-animation-duration 300)
+(def initial-animation-duration 400)
 (def release-animation-duration 150)
 (def cancellation-animation-duration 100)
 (def swipe-opacity-range 100)
-(def cancellation-height 180)
+(def cancellation-coefficient 0.3)
 (def min-opacity 0.05)
 (def min-velocity 0.1)
 
@@ -19,6 +19,7 @@
            duration callback]}]
   (when (fn? callback)
     (js/setTimeout callback duration))
+  (prn new-bottom-value)
   (animation/start
    (animation/parallel
     [(animation/timing opacity
@@ -32,13 +33,6 @@
                         :friction        6
                         :useNativeDriver true})])))
 
-(defn animate-panel-open [opacity-value bottom-value]
-  (animate {:bottom            bottom-value
-            :new-bottom-value  0
-            :opacity           opacity-value
-            :new-opacity-value 1
-            :duration          initial-animation-duration}))
-
 (defn- on-move
   [{:keys [height bottom-value opacity-value]}]
   (fn [_ state]
@@ -48,37 +42,26 @@
               (animation/set-value bottom-value dy)
               (animation/set-value opacity-value opacity))
             (neg? dy)
-            (animation/set-value bottom-value (/ dy 2))))))
+            (animation/set-value bottom-value dy)))))
 
-(defn cancelled? [height dy vy]
+(defn- cancelled? [height dy vy]
   (or
    (<= min-velocity vy)
-   (> cancellation-height (- height dy))))
-
-(defn- cancel
-  ([opts] (cancel opts nil))
-  ([{:keys [height bottom-value show-sheet? opacity-value]} callback]
-   (animate {:bottom            bottom-value
-             :new-bottom-value  height
-             :opacity           opacity-value
-             :new-opacity-value 0
-             :duration          cancellation-animation-duration
-             :callback          #(do (reset! show-sheet? false)
-                                     (when (fn? callback) (callback)))})))
+   (> (* cancellation-coefficient height) (- height dy))))
 
 (defn- on-release
-  [{:keys [height bottom-value opacity-value on-cancel] :as opts}]
+  [{:keys [height bottom-value close-sheet opacity-value]}]
   (fn [_ state]
     (let [{:strs [dy vy]} (js->clj state)]
       (if (cancelled? height dy vy)
-        (cancel opts on-cancel)
+        (close-sheet)
         (animate {:bottom            bottom-value
                   :new-bottom-value  0
                   :opacity           opacity-value
                   :new-opacity-value 1
                   :duration          release-animation-duration})))))
 
-(defn swipe-pan-responder [opts]
+(defn- swipe-pan-responder [opts]
   (.create
    react/pan-responder
    (clj->js
@@ -89,75 +72,104 @@
      :onPanResponderRelease       (on-release opts)
      :onPanResponderTerminate     (on-release opts)})))
 
-(defn pan-handlers [pan-responder]
+(defn- pan-handlers [pan-responder]
   (js->clj (.-panHandlers pan-responder)))
 
-(defn- bottom-sheet-view
-  [{:keys [opacity-value bottom-value]}]
-  (reagent.core/create-class
-   {:component-did-mount
-    (fn []
-      (react/dismiss-keyboard!)
-      (animate-panel-open opacity-value bottom-value))
-    :reagent-render
-    (fn [{:keys [opacity-value bottom-value height
-                 content on-cancel disable-drag?]
-          :or   {on-cancel #(re-frame/dispatch [:bottom-sheet/hide])}
-          :as   opts}]
-      [react/keyboard-avoiding-view {:style styles/container}
-       [react/touchable-highlight
-        {:on-press #(cancel opts on-cancel)
-         :style    styles/container}
+(defn- on-open [{:keys [bottom-value opacity-value]}]
+  (react/dismiss-keyboard!)
+  (animate {:bottom            bottom-value
+            :new-bottom-value  0
+            :opacity           opacity-value
+            :new-opacity-value 1
+            :duration          initial-animation-duration}))
 
-        [react/animated-view (styles/shadow opacity-value)]]
-       [react/animated-view (merge
-                             {:style (styles/content-container height bottom-value)}
-                             (when-not disable-drag?
-                               (pan-handlers (swipe-pan-responder opts))))
-        [react/view {:style styles/content-header}
-         [react/view styles/handle]]
-        [react/view {:style {:flex   1
-                             :height height}}
-         [content]]
-        [react/view {:style styles/bottom-view}]]])}))
+(defn- on-close
+  [{:keys [bottom-value opacity-value on-cancel height]}]
+  (animate {:bottom            bottom-value
+            :new-bottom-value  height
+            :opacity           opacity-value
+            :new-opacity-value 0
+            :duration          cancellation-animation-duration
+            :callback (fn []
+                        (when (fn? on-cancel)
+                          (on-cancel)))}))
 
-(defn bottom-sheet
-  [{:keys [show? content-height on-cancel]}]
-  (let [show-sheet?          (reagent/atom show?)
-        total-content-height (+ content-height styles/border-radius
-                                styles/bottom-padding)
-        bottom-value         (animation/create-value total-content-height)
-        opacity-value        (animation/create-value 0)
-        opts                 {:height        total-content-height
-                              :bottom-value  bottom-value
-                              :opacity-value opacity-value
-                              :show-sheet?   show-sheet?
-                              :on-cancel     on-cancel}]
-    (reagent.core/create-class
-     {:component-will-update
-      (fn [this [_ new-args]]
-        (let [old-args             (second (.-argv (.-props this)))
-              old-show?            (:show? old-args)
-              new-show?            (:show? new-args)
-              old-height           (:content-height old-args)
-              new-height           (:content-height new-args)
-              total-content-height (+ new-height
-                                      styles/border-radius
-                                      styles/bottom-padding)
-              opts'                (assoc opts :height total-content-height)]
-          (when (and new-show? (not= old-height new-height))
-            (animation/set-value bottom-value new-height))
-          (cond (and (not old-show?) new-show?)
-                (reset! show-sheet? true)
+;; TODO: add max-height
+(defn bottom-sheet-view [{:keys [window-height]}]
+  (let [opacity-value    (animation/create-value 0)
+        bottom-value     (animation/create-value window-height)
+        content-height   (reagent/atom window-height)
+        external-visible (reagent/atom false)]
+    (fn [{:keys [content on-cancel disable-drag? show-handle? show? safe-area window-height]
+          :or   {show-handle? true
+                 on-cancel    #(re-frame/dispatch [:bottom-sheet/hide])}}]
+      (let [height       (+ @content-height
+                            styles/border-radius)
+            max-height   (- window-height
+                            (:top safe-area)
+                            styles/margin-top)
+            sheet-height (min max-height height)
+            close-sheet  (fn []
+                           (on-close {:opacity-value opacity-value
+                                      :bottom-value  bottom-value
+                                      :height        height
+                                      :on-cancel     on-cancel}))]
+        (when-not (= @external-visible show?)
+          (reset! external-visible show?)
+          (cond
+            (true? show?)
+            (on-open {:bottom-value  bottom-value
+                      :opacity-value opacity-value
+                      :height        height})
 
-                (and old-show? (false? new-show?) (true? @show-sheet?))
-                (cancel opts'))))
-      :reagent-render
-      (fn [{:keys [content content-height]}]
-        (let [total-content-height (+ content-height
-                                      styles/border-radius
-                                      styles/bottom-padding)]
-          (when @show-sheet?
-            [bottom-sheet-view (assoc opts
-                                      :content content
-                                      :height total-content-height)])))})))
+            (false? show?)
+            (close-sheet)))
+        (when show?
+          [react/view {:style styles/container}
+           [react/touchable-highlight {:style    styles/container
+                                       :on-press #(close-sheet)}
+            [react/animated-view {:style (styles/shadow opacity-value)}]]
+
+           [react/keyboard-avoiding-view {:pointer-events "box-none"
+                                          :behaviour      "position"
+                                          :style          styles/sheet-wrapper}
+            [react/animated-view (merge
+                                  {:pointer-events "box-none"
+                                   :style          (styles/content-container window-height sheet-height bottom-value)}
+                                  (when-not (or disable-drag?
+                                                (= max-height sheet-height))
+                                    (pan-handlers
+                                     (swipe-pan-responder {:bottom-value  bottom-value
+                                                           :opacity-value opacity-value
+                                                           :height        height
+                                                           :close-sheet   #(close-sheet)}))))
+             [react/view (merge {:style styles/content-header}
+                                (when-not disable-drag?
+                                  (pan-handlers
+                                   (swipe-pan-responder {:bottom-value  bottom-value
+                                                         :opacity-value opacity-value
+                                                         :height        height
+                                                         :close-sheet   #(close-sheet)}))))
+              (when show-handle?
+                [react/view styles/handle])]
+             [react/animated-view {:style {:height sheet-height}}
+              [react/scroll-view {:bounces        false
+                                  :scroll-enabled true
+                                  :style          {:flex 1}}
+               [react/view {:style     {:padding-top    styles/vertical-padding
+                                        :padding-bottom (+ styles/vertical-padding
+                                                           (:bottom safe-area))}
+                            :on-layout #(->> %
+                                             .-nativeEvent
+                                             .-layout
+                                             .-height
+                                             (reset! content-height))}
+                [content]]]]]]])))))
+
+(defn bottom-sheet [props]
+  [react/safe-area-context
+   (fn [insets]
+     (reagent/as-element
+      [bottom-sheet-view (assoc props
+                                :window-height @(re-frame/subscribe [:dimensions/window-height])
+                                :safe-area (js->clj insets :keywordize-keys true))]))])

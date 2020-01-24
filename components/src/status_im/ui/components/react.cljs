@@ -299,6 +299,7 @@
    comp])
 
 (def safe-area-provider (adapt-class (object/get js-dependencies/safe-area-context "SafeAreaProvider")))
+(def safe-area-context (adapt-class (object/get js-dependencies/safe-area-context "SafeAreaContext")))
 
 (defn create-main-screen-view [current-view]
   (fn [props & children]
