@@ -17,6 +17,8 @@
   [{:keys [opacity new-opacity-value
            bottom new-bottom-value
            duration callback]}]
+  (when (fn? callback)
+    (js/setTimeout callback duration))
   (animation/start
    (animation/parallel
     [(animation/timing opacity
@@ -28,8 +30,7 @@
                         :duration        duration
                         :tension         40
                         :friction        6
-                        :useNativeDriver true})])
-   (when (fn? callback) callback)))
+                        :useNativeDriver true})])))
 
 (defn animate-panel-open [opacity-value bottom-value]
   (animate {:bottom            bottom-value
