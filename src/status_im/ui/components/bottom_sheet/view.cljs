@@ -95,7 +95,9 @@
   [{:keys [opacity-value bottom-value]}]
   (reagent.core/create-class
    {:component-did-mount
-    #(animate-panel-open opacity-value bottom-value)
+    (fn []
+      (react/dismiss-keyboard!)
+      (animate-panel-open opacity-value bottom-value))
     :reagent-render
     (fn [{:keys [opacity-value bottom-value height
                  content on-cancel disable-drag?]
