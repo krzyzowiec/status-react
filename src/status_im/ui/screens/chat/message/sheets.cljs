@@ -27,7 +27,7 @@
        :accessibility-label :delete-transaction-button
        :on-press            #(hide-sheet-and-dispatch [:chat.ui/delete-message chat-id message-id])}]]))
 
-(defn message-long-press [{:keys [message-id text]}]
+(defn message-long-press [{:keys [message-id content]}]
   (fn []
     [react/view
      [list-item/list-item
@@ -41,7 +41,7 @@
        :icon     :main-icons/copy
        :on-press (fn []
                    (re-frame/dispatch [:bottom-sheet/hide-sheet])
-                   (react/copy-to-clipboard text))}]
+                   (react/copy-to-clipboard (:text content)))}]
      (when-not platform/desktop?
        [list-item/list-item
         {:theme    :action
@@ -49,5 +49,5 @@
          :icon     :main-icons/share
          :on-press (fn []
                      (re-frame/dispatch [:bottom-sheet/hide-sheet])
-                     (list-selection/open-share {:message text}))}])]))
+                     (list-selection/open-share {:message (:text content)}))}])]))
 
