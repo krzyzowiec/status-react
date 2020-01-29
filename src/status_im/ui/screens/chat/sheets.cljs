@@ -35,21 +35,25 @@
      :icon        (multiaccounts/displayed-photo contact)
      :title       [view-profile {:name   chat-name
                                  :helper :t/view-profile}]
+     :accessibility-label :view-chat-details-button
      :accessories [:chevron]
      :on-press    #(hide-sheet-and-dispatch  [:chat.ui/show-profile chat-id])}]
    [list-item/list-item
     {:theme    :action
      :title    :t/clear-history
+     :accessibility-label :clear-history-button
      :icon     :main-icons/close
      :on-press #(hide-sheet-and-dispatch [:chat.ui/clear-history-pressed chat-id])}]
    [list-item/list-item
     {:theme    :action
      :title    :t/fetch-history
+     :accessibility-label :fetch-history-button
      :icon     :main-icons/arrow-down
      :on-press #(hide-sheet-and-dispatch [:chat.ui/fetch-history-pressed chat-id])}]
    [list-item/list-item
     {:theme    :action-destructive
      :title    :t/delete-chat
+     :accessibility-label :delete-chat-button
      :icon     :main-icons/delete
      :on-press #(hide-sheet-and-dispatch [:chat.ui/remove-chat-pressed chat-id])}]])
 
@@ -61,6 +65,7 @@
        [list-item/list-item
         {:theme    :action
          :title    :t/share-chat
+         :accessibility-label :share-chat-button
          :icon     :main-icons/share
          :on-press (fn []
                      (re-frame/dispatch [:bottom-sheet/hide-sheet])
@@ -68,16 +73,19 @@
      [list-item/list-item
       {:theme    :action
        :title    :t/clear-history
+       :accessibility-label :clear-history-button
        :icon     :main-icons/close
        :on-press #(hide-sheet-and-dispatch [:chat.ui/clear-history-pressed chat-id])}]
      [list-item/list-item
       {:theme    :action
        :title    :t/fetch-history
+       :accessibility-label :fetch-history-button
        :icon     :main-icons/arrow-down
        :on-press #(hide-sheet-and-dispatch [:chat.ui/fetch-history-pressed chat-id])}]
      [list-item/list-item
       {:theme    :action-destructive
        :title    :t/delete-chat
+       :accessibility-label :delete-chat-button
        :icon     :main-icons/delete
        :on-press #(hide-sheet-and-dispatch [:chat.ui/remove-chat-pressed chat-id])}]]))
 
@@ -94,16 +102,19 @@
    [list-item/list-item
     {:theme    :action
      :title    :t/clear-history
+     :accessibility-label :clear-history-button
      :icon     :main-icons/close
      :on-press #(hide-sheet-and-dispatch [:chat.ui/clear-history-pressed chat-id])}]
    [list-item/list-item
     {:theme    :action
      :title    :t/fetch-history
+     :accessibility-label :fetch-history-button
      :icon     :main-icons/arrow-down
      :on-press #(hide-sheet-and-dispatch [:chat.ui/fetch-history-pressed chat-id])}]
    [list-item/list-item
     {:theme    :action-destructive
      :title    :t/delete-chat
+     :accessibility-label :delete-chat-button
      :icon     :main-icons/delete
      :on-press #(hide-sheet-and-dispatch [:group-chats.ui/remove-chat-pressed chat-id])}]])
 
