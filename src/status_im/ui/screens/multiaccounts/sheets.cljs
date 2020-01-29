@@ -5,7 +5,8 @@
 
 (defn actions-sheet []
   [react/view
-   [list-item/list-item {:on-press #(do (re-frame/dispatch [:bottom-sheet/hide])
+   [list-item/list-item {:theme    :action
+                         :on-press #(do (re-frame/dispatch [:bottom-sheet/hide])
                                         (re-frame/dispatch [:multiaccounts.create.ui/intro-wizard false]))
                          :icon     :main-icons/add
                          :title    :t/generate-a-new-key}]])
