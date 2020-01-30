@@ -360,7 +360,9 @@
               " cursor " cursor
               " limit " actual-limit)
     (json-rpc/call
-     {:method "shhext_requestMessages"
+     {:method (if config/waku-enabled?
+                "wakuext_requestMessages"
+                "shhext_requestMessages")
       :params [(cond-> {:topics         topics
                         :mailServerPeer address
                         :symKeyID       sym-key-id
