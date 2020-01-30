@@ -5,7 +5,7 @@
 
 (defn tab [active?]
   {:flex                1
-   :height              tabs.styles/tab-height
+   :height              tabs.styles/tabs-height
    :justify-content     :center
    :align-items         :center
    :padding-bottom      (if active? 0 1)
@@ -16,7 +16,7 @@
 
 (def tabs-container
   {:flex-direction :row
-   :height         tabs.styles/tab-height})
+   :height         tabs.styles/tabs-height})
 
 (defn tab-title
   [active?]

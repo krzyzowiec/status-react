@@ -14,25 +14,18 @@
 
 ;; Core
 (defonce createAppContainer (oget ReactNavigation ["createAppContainer"]))
-(defonce StateUtils (oget ReactNavigation ["StateUtils"]))
-
 (defonce NavigationEvents (oget ReactNavigation ["NavigationEvents"]))
 (defonce NavigationActions (oget ReactNavigation ["NavigationActions"]))
 
 (defonce StackActions (oget ReactNavigation ["StackActions"]))
 
 ;; Navigators
-(defonce createNavigator (oget ReactNavigation ["createNavigator"]))
 (defonce createStackNavigator (oget ReactNavigationStack ["createStackNavigator"]))
 (defonce createSwitchNavigator (oget ReactNavigation ["createSwitchNavigator"]))
 (defonce createBottomTabNavigator (oget ReactNavigationTabs ["createBottomTabNavigator"]))
 (defonce createTwoPaneNavigator (oget TwoPaneNavigator ["createTwoPaneNavigator"]))
 
 ;; Views
-(defonce StackView (oget ReactNavigationStack ["StackView"]))
-(defonce HeaderView (oget ReactNavigationStack ["Header"]))
-(defonce SwitchView (oget ReactNavigation ["SwitchView"]))
-
 (assert (and React ReactNavigation ReactNavigationTabs ReactNavigationStack TwoPaneNavigator)
         "React, React Navigation and peer dependencies must be installed.")
 
@@ -76,13 +69,6 @@
                                                     :opt-un [:react-navigation.RouteConfigs.route/path
                                                              :react-navigation/navigationOptions]))
 (s/def :react-navigation/RouteConfigs (s/map-of keyword? :react-navigation.RouteConfigs/route))
-
-(defn append-navigationOptions
-  "If navigationOptions are specified append to the react-component"
-  [react-component navigationOptions]
-  (when (and navigationOptions (not= navigationOptions :cljs.spec.alpha/invalid))
-    (aset react-component "navigationOptions" (clj->js navigationOptions)))
-  react-component)
 
 (s/fdef append-navigationOptions
         :args (s/tuple :react/component :react-navigation/navigationOptions)

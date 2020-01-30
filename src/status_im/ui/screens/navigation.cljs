@@ -15,35 +15,20 @@
 
 (defmethod preload-data! :default [db _] db)
 
-(defn- -preload-data! [{:keys [was-modal?] :as db} & args]
-  (if was-modal?
-    (dissoc db :was-modal?)
-    (apply preload-data! db args)))
-
 (fx/defn navigate-to-cofx
   [{:keys [db]} go-to-view-id screen-params]
-  (let [view-id (:view-id db)
-        db      (cond-> (assoc db :view-id go-to-view-id)
+  (let [db      (cond-> (assoc db :view-id go-to-view-id)
+
+                  ;; TODO: Inspect the need of screen-params
                   (seq screen-params)
                   (assoc-in [:navigation/screen-params go-to-view-id]
                             screen-params))]
-    {:db           (if (= view-id go-to-view-id)
-                     db
-                     (-> db
-                         (update :navigation-stack conj go-to-view-id)
-                         (assoc :view-id go-to-view-id)))
+    {:db           db
      ::navigate-to [go-to-view-id screen-params]}))
 
 (fx/defn navigate-reset
-  [{:keys [db]} {:keys [index actions] :as config}]
-  (let [stack (into '() (map :routeName actions))
-        view-id (get stack index)]
-    {:db              (assoc db
-                             :view-id view-id
-                             ;;NOTE: stricly needs to be a list
-                             ;;because navigate-back pops it
-                             :navigation-stack stack)
-     ::navigate-reset config}))
+  [_ config]
+  {::navigate-reset config})
 
 (def unload-data-interceptor
   (re-frame/->interceptor
@@ -80,26 +65,13 @@
  (fn [cofx [_ & [go-to-view-id screen-params]]]
    (navigate-to-cofx cofx go-to-view-id screen-params)))
 
-(handlers/register-handler-fx
- :navigate-to-modal
- navigation-interceptors
- (fn [{:keys [db]} [_ modal-view]]
-   {:db (assoc db :modal modal-view)}))
-
 (fx/defn navigate-back
-  [{{:keys [navigation-stack view-id] :as db} :db}]
-  {::navigate-back nil
-   :db (let [[previous-view-id :as navigation-stack'] (pop navigation-stack)
-             first-in-stack (first navigation-stack)]
-         (if (= view-id first-in-stack)
-           (-> db
-               (assoc :view-id previous-view-id)
-               (assoc :navigation-stack navigation-stack'))
-           (assoc db :view-id first-in-stack)))})
+  [_]
+  {::navigate-back nil})
 
 (handlers/register-handler-fx
  :navigate-back
- (re-frame/enrich -preload-data!)
+ (re-frame/enrich preload-data!)
  (fn [cofx _]
    (navigate-back cofx)))
 
@@ -113,13 +85,3 @@
  :navigate-to-clean
  (fn [cofx [_ view-id params]]
    (navigate-to-cofx cofx view-id params)))
-
-(handlers/register-handler-fx
- :navigate-to-tab
- navigation-interceptors
- (fn [{:keys [db] :as cofx} [_ view-id]]
-   (fx/merge cofx
-             {:db (-> db
-                      (assoc :prev-tab-view-id (:view-id db))
-                      (assoc :prev-view-id (:view-id db)))}
-             (navigate-to-cofx view-id {}))))

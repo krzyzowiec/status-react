@@ -314,6 +314,7 @@
 
 (fx/defn open-keycard-login
   [{:keys [db] :as cofx}]
+  ;; TODO: Get rid of navigation-stack
   (let [navigation-stack (:navigation-stack db)]
     (fx/merge cofx
               {:db (-> db

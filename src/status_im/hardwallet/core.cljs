@@ -147,6 +147,7 @@
 
 (fx/defn enter-pin-navigate-back-button-clicked
   [{:keys [db] :as cofx}]
+  ;; TODO: Get rid of navigation-stack
   (let [screen-before (set (take 4 (:navigation-stack db)))
         navigate-to-browser? (contains? screen-before :browser-stack)]
     (if navigate-to-browser?
@@ -745,6 +746,7 @@
    cofx
    (clear-on-card-connected)
    (clear-on-card-read)
+   ;; TODO: Get rid of navigation stack
    (if (contains? (set (take 3 (:navigation-stack db)))
                   :keycard-login-pin)
      (navigation/navigate-to-cofx :multiaccounts nil)

@@ -8,7 +8,6 @@
             [status-im.ui.components.bottom-sheet.core :as bottom-sheet]
             [status-im.cljs-react-navigation.reagent :as navigation]
             [reagent.core :as reagent]
-            [taoensso.timbre :as log]
             [status-im.ui.screens.mobile-network-settings.view :as mobile-network-settings]
             [status-im.ui.screens.keycard.views :as keycard]
             [status-im.ui.screens.home.sheet.views :as home.sheet]
@@ -90,23 +89,21 @@
      (fn [resolve _]
        (resolve @state)))))
 
+(defonce main-app-navigator    (navigation/create-app-container (routing/get-main-component false)))
+(defonce twopane-app-navigator (navigation/create-app-container (routing/get-main-component true)))
+
 (defn main []
-  (let [view-id               (re-frame/subscribe [:view-id])
-        main-app-navigator    (navigation/create-app-container (routing/get-main-component false))
-        twopane-app-navigator (navigation/create-app-container (routing/get-main-component true))
-        two-pane?             (reagent/atom (dimensions/fit-two-pane?))]
+  (let [two-pane?             (reagent/atom (dimensions/fit-two-pane?))]
     (.addEventListener react/dimensions
                        "change"
                        (fn [_]
                          (let [two-pane-enabled? (dimensions/fit-two-pane?)]
                            (re-frame/dispatch [:set-two-pane-ui-enabled two-pane-enabled?])
-                           (log/debug ":set-two-pane " two-pane-enabled?)
                            (reset! two-pane? two-pane-enabled?))))
     (reagent/create-class
      {:component-did-mount
       (fn []
         (re-frame/dispatch [:set-two-pane-ui-enabled @two-pane?])
-        (log/debug :main-component-did-mount @view-id)
         (utils.universal-links/initialize))
 
       :component-will-unmount
@@ -117,26 +114,17 @@
         (when-not platform/desktop?
           (react/dismiss-keyboard!)))
 
-      :component-did-update
-      (fn []
-        (log/debug :main-component-did-update @view-id))
-
       :reagent-render
       (fn []
         [react/safe-area-provider
          [react/view {:flex 1}
           [(if @two-pane? twopane-app-navigator main-app-navigator)
            (merge {:ref               (fn [r]
-                                        (navigation/set-navigator-ref r)
-                                        ;; TODO: Review this code
-                                        (when (and platform/android?
-                                                   (not debug?)
-                                                   (not (contains? #{:intro :login :progress} @view-id)))
-                                          (navigation/navigate-to @view-id nil)))
+                                        (navigation/set-navigator-ref r))
                    :enableURLHandling false}
                   (when debug?
                     ;; https://github.com/react-navigation/native/blob/d0b24924b2e075fed3bd6586339d34fdd4c2b78e/src/createAppContainer.js#L293
-                    ;; urlShouldBe handled by react-navigation otherwise loadNavigationState does not work
+                    ;; url should be handled by react-navigation otherwise loadNavigationState does not work
                     {:enableURLHandling      true
                      :persistNavigationState persist-state!
                      :loadNavigationState    load-state!}))]

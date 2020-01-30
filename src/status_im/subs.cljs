@@ -60,7 +60,6 @@
 
 ;;view
 (reg-root-key-sub :view-id :view-id)
-(reg-root-key-sub :navigation-stack :navigation-stack)
 (reg-root-key-sub :screen-params :navigation/screen-params)
 (reg-root-key-sub :two-pane-ui-enabled? :two-pane-ui-enabled?)
 
@@ -361,11 +360,11 @@
  (fn [[params view-id-db] [_ view-id]]
    (get params (or view-id view-id-db))))
 
+;; FIXME
 (re-frame/reg-sub
  :can-navigate-back?
- :<- [:navigation-stack]
- (fn [stack]
-   (> (count stack) 1)))
+ (fn [_]
+   true))
 
 (re-frame/reg-sub
  :delete-swipe-position
@@ -440,8 +439,6 @@
  :<- [:ethereum/chain-keyword]
  (fn [chain-keyword]
    (tokens/native-currency chain-keyword)))
-
-(reg-root-key-sub :ethereum/current-block :ethereum/current-block)
 
 ;;MULTIACCOUNT ==============================================================================================================
 

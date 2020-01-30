@@ -70,6 +70,7 @@
 (def all-screens
   {:login                                            login/login
    :progress                                         progress/progress
+   :intro-progress                                   progress/progress
    :create-multiaccount-generate-key                 intro/wizard-generate-key
    :create-multiaccount-choose-key                   intro/wizard-choose-key
    :create-multiaccount-select-key-storage           intro/wizard-select-key-storage
@@ -86,10 +87,10 @@
    :hardwallet-connect                               hardwallet.connect/hardwallet-connect
    :hardwallet-connect-settings                      hardwallet.connect/hardwallet-connect
    :hardwallet-connect-sign                          hardwallet.connect/hardwallet-connect
-   :hardwallet-connect-modal                         [:modal hardwallet.connect/hardwallet-connect]
+   :hardwallet-connect-modal                         hardwallet.connect/hardwallet-connect
    :enter-pin-settings                               hardwallet.pin/enter-pin
    :enter-pin-sign                                   hardwallet.pin/enter-pin
-   :enter-pin-modal                                  [:modal hardwallet.pin/enter-pin]
+   :enter-pin-modal                                  hardwallet.pin/enter-pin
    :keycard-onboarding-intro                         keycard.onboarding/intro
    :keycard-onboarding-start                         keycard.onboarding/start
    :keycard-onboarding-puk-code                      keycard.onboarding/puk-code
@@ -121,29 +122,29 @@
    :chat                                             chat/chat
    :select-chat                                      chat/select-chat
    :profile                                          profile.contact/profile
-   :new-chat                                         [:modal new-chat/new-chat]
-   :qr-scanner                                       [:modal qr-scanner/qr-scanner]
+   :new-chat                                         new-chat/new-chat
+   :qr-scanner                                       qr-scanner/qr-scanner
    :new-group                                        group/new-group
    :add-participants-toggle-list                     group/add-participants-toggle-list
    :contact-toggle-list                              group/contact-toggle-list
    :group-chat-profile                               profile.group-chat/group-chat-profile
-   :new-public-chat                                  [:modal new-public-chat/new-public-chat]
+   :new-public-chat                                  new-public-chat/new-public-chat
    :open-dapp                                        open-dapp/open-dapp
    :browser                                          browser/browser
    :stickers                                         stickers/packs
    :stickers-pack                                    stickers/pack
-   :stickers-pack-modal                              [:modal stickers/pack-modal]
-   :tribute-learn-more                               [:modal tr-to-talk/learn-more]
-   :chat-modal                                       [:modal chat/chat-modal]
+   :stickers-pack-modal                              stickers/pack-modal
+   :tribute-learn-more                               tr-to-talk/learn-more
+   :chat-modal                                       chat/chat-modal
    :wallet                                           wallet.accounts/accounts-overview
    :wallet-account                                   wallet.account/account
    :collectibles-list                                collectibles/collectibles-list
-   :contact-code                                     [:modal wallet.components/contact-code]
+   :contact-code                                     wallet.components/contact-code
    :wallet-transaction-details                       wallet-transactions/transaction-details
    :wallet-settings-assets                           wallet-settings/manage-assets
    :wallet-add-custom-token                          custom-tokens/add-custom-token
    :wallet-custom-token-details                      custom-tokens/custom-token-details
-   :wallet-transactions-filter                       [:modal wallet-transactions/filter-history]
+   :wallet-transactions-filter                       wallet-transactions/filter-history
    :my-profile                                       profile.user/my-profile
    :contacts-list                                    contacts-list/contacts-list
    :ens-main                                         ens/main
@@ -181,7 +182,7 @@
    :reset-card                                       hardwallet.settings/reset-card
    :keycard-settings                                 hardwallet.settings/keycard-settings
    :mobile-network-settings                          mobile-network-settings/mobile-network-settings
-   :welcome                                          [:modal home/welcome]
+   :welcome                                          home/welcome
    :keycard-welcome                                  keycard/welcome
    :add-new-account                                  add-account/add-account
    :add-watch-account                                add-account/add-watch-account

@@ -61,10 +61,6 @@
 ;; Spec overrides for Reagent Components
 (s/def :react/component (s/conformer react-component?))
 (s/def :react/element (s/conformer react-element?))
-(s/def :react-navigation.navigationOptions/headerTitle (s/conformer string-or-react-element?))
-(s/def :react-navigation.navigationOptions/headerLeft (s/conformer string-or-react-element?))
-(s/def :react-navigation.navigationOptions/headerRight (s/conformer string-or-react-element?))
-(s/def :react-navigation.navigationOptions/tabBarIcon (s/conformer fn-or-react-element?))
 (s/def :react-navigation.RouteConfigs.route/screen (s/conformer fn-or-react-component?))
 
 ;; API

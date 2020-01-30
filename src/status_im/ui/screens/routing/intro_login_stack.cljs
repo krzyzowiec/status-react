@@ -1,55 +1,8 @@
 (ns status-im.ui.screens.routing.intro-login-stack
   (:require [status-im.utils.config :as config]))
 
-(def all-screens
-  #{:login
-    :progress
-    :create-multiaccount
-    :create-multiaccount-generate-key
-    :create-multiaccount-choose-key
-    :create-multiaccount-select-key-storage
-    :create-multiaccount-create-code
-    :create-multiaccount-confirm-code
-    :recover-multiaccount-enter-phrase
-    :recover-multiaccount-select-storage
-    :recover-multiaccount-enter-password
-    :recover-multiaccount-confirm-password
-    :recover-multiaccount-success
-    :multiaccounts
-    :intro
-    :intro-wizard
-    :hardwallet-authentication-method
-    :hardwallet-connect
-    :keycard-connection-lost
-    :keycard-connection-lost-setup
-    :keycard-nfc-on
-    :keycard-pairing
-    :keycard-blank
-    :keycard-wrong
-    :keycard-unpaired
-    :keycard-login-pin
-    :keycard-login-connect-card
-    :not-keycard
-    :keycard-onboarding-intro
-    :keycard-onboarding-start
-    :keycard-onboarding-puk-code
-    :keycard-onboarding-preparing
-    :keycard-onboarding-finishing
-    :keycard-onboarding-pin
-    :keycard-onboarding-recovery-phrase
-    :keycard-onboarding-recovery-phrase-confirm-word1
-    :keycard-onboarding-recovery-phrase-confirm-word2
-    :keycard-recovery-intro
-    :keycard-recovery-start
-    :keycard-recovery-pair
-    :keycard-recovery-recovering
-    :keycard-recovery-success
-    :keycard-recovery-no-key
-    :keycard-recovery-pin})
-
-(defn login-stack [view-id]
-  {:name    :login-stack
-   :screens (cond-> [:login
+(def login-stack
+  {:screens (cond-> [:login
                      :multiaccounts
                      :intro-wizard
                      :progress
@@ -75,16 +28,10 @@
                        :keycard-blank
                        :keycard-wrong
                        :keycard-unpaired
-                       :not-keycard]))
-   :config  (if
-                ;; add view-id here if you'd like that view to be
-                ;; first view when app is started
-             (#{:login :progress :multiaccounts :enter-pin-login :keycard-login-pin} view-id)
-              {:initialRouteName view-id}
-              {:initialRouteName :login})})
+                       :not-keycard]))})
 
-(defn intro-stack []
-  (-> (login-stack :intro)
+(def intro-stack
+  (-> login-stack
       (update :screens conj
               :intro
               :intro-wizard
@@ -109,4 +56,4 @@
               :keycard-recovery-no-key
               :keycard-recovery-pin)
       (assoc :name :intro-stack)
-      (assoc :config {:initialRouteName :intro})))
+      (assoc :config {:initialRouteName :progress})))

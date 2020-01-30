@@ -3,15 +3,16 @@
    [status-im.ui.components.animation :as animation]
    [status-im.ui.components.tabbar.styles :as tabs.styles]
    [reagent.core :as reagent]
+   [oops.core :refer [oget]]
+   [cljs-bean.core :refer [bean]]
    [status-im.ui.components.react :as react]
    [status-im.utils.platform :as platform]
    [status-im.ui.components.icons.vector-icons :as vector-icons]
-   [status-im.ui.components.common.common :as components.common]
    [status-im.ui.components.badge :as badge]
    [status-im.i18n :as i18n]
    [re-frame.core :as re-frame]))
 
-(defonce visible? (animation/create-value 1))
+(defonce visible? (animation/create-value 0))
 (defonce last-to-value (atom 1))
 
 (defn animate
@@ -27,6 +28,31 @@
                          :easing          (animation/cubic)
                          :useNativeDriver true})
       callback))))
+
+(defn main-tab? [view-id]
+  (contains?
+   #{:home :wallet :open-dapp :my-profile :wallet-onboarding-setup}
+   view-id))
+
+(defn minimize-bar [minimized-state routes index]
+  (let [tab-stack  (aget routes index)
+        index      (oget tab-stack "index")
+        route      (aget (oget tab-stack "routes") index)
+        route-name (keyword (oget route "routeName"))]
+    (if (main-tab? route-name)
+      (do
+        (reset! minimized-state false)
+        (animate visible? 150 0))
+      (do
+        (reset! minimized-state true)
+        (animate visible? 150 1)))))
+
+(defn- inverted-routes [routes]
+  (reduce (fn [acc [i el]]
+            (assoc acc (keyword (oget el "key"))
+                   #js {:index (name i) :route el}))
+          {}
+          (bean routes)))
 
 (def tabs-list-data
   (->>
@@ -52,146 +78,63 @@
      :accessibility-label :profile-tab-button}]
    (remove nil?)))
 
-(defn new-tab
-  [{:keys [icon label active? nav-stack
-           accessibility-label count-subscription]}]
-  (let [count (when count-subscription
-                (re-frame/subscribe [count-subscription]))]
-    [react/touchable-highlight
-     {:style               tabs.styles/touchable-container
-      :disabled            active?
-      :on-press            #(re-frame/dispatch-sync [:navigate-to nav-stack])
-      :accessibility-label accessibility-label}
-     [react/view
-      {:style tabs.styles/new-tab-container}
-      [react/view
-       {:style tabs.styles/icon-container}
-       [vector-icons/icon icon (tabs.styles/icon active?)]
-       (when (pos? (if count @count 0))
-         [react/view {:style (if (= nav-stack :chat-stack)
-                               tabs.styles/message-counter
-                               tabs.styles/counter)}
-          [badge/message-counter @count true]])]
-      (when-not platform/desktop?
-        [react/view {:style tabs.styles/tab-title-container}
-         [react/text {:style (tabs.styles/new-tab-title active?)}
-          label]])]]))
+(defn tab []
+  (fn [{:keys [icon label active? nav-stack on-press
+               accessibility-label count-subscription]}]
+    (let [count (when count-subscription @(re-frame/subscribe [count-subscription]))]
+      [react/touchable-highlight {:style               tabs.styles/touchable-container
+                                  :disabled            active?
+                                  :on-press            on-press
+                                  :accessibility-label accessibility-label}
+       [react/view {:style tabs.styles/tab-container}
+        [react/view {:style tabs.styles/icon-container}
+         [vector-icons/icon icon (tabs.styles/icon active?)]
+         (when (pos? count)
+           [react/view {:style (if (= nav-stack :chat-stack)
+                                 tabs.styles/message-counter
+                                 tabs.styles/counter)}
+            [badge/message-counter count true]])]
 
-(defn tabs [current-view-id]
-  [react/view
-   {:style tabs.styles/new-tabs-container}
-   [react/view {:style tabs.styles/tabs}
-    (for [{:keys                [nav-stack accessibility-label count-subscription]
-           {:keys [icon title]} :content} tabs-list-data]
-      ^{:key nav-stack}
-      [new-tab
-       {:icon                icon
-        :label               title
-        :accessibility-label accessibility-label
-        :count-subscription  count-subscription
-        :active?             (= current-view-id nav-stack)
-        :nav-stack           nav-stack}])]])
+        (when-not platform/desktop?
+          [react/view {:style tabs.styles/tab-title-container}
+           [react/text {:style (tabs.styles/tab-title active?)}
+            label]])]])))
 
-(defn main-tab? [view-id]
-  (contains?
-   #{:home :wallet :open-dapp :my-profile :wallet-onboarding-setup}
-   view-id))
+(defn tabs []
+  (let [minimized-state (reagent/atom nil)]
+    (fn [{:keys [on-tab-press routes index inset]}]
+      (minimize-bar minimized-state routes index)
 
-(defn minimize-bar [view-id]
-  (if (main-tab? view-id)
-    (animate visible? 150 1)
-    (animate visible? 150 tabs.styles/minimized-tab-ratio)))
+      (let [routes-map (inverted-routes routes)]
+        [react/view {:style (tabs.styles/tabs-wrapper inset)}
+         [react/animated-view {:style (tabs.styles/animated-container @minimized-state visible?)}
+          [react/view
+           {:style tabs.styles/tabs-container}
+           [react/view {:style tabs.styles/tabs}
+            (for [{:keys                [nav-stack accessibility-label count-subscription]
+                   {:keys [icon title]} :content} tabs-list-data]
+              ^{:key nav-stack}
+              [tab
+               {:icon                icon
+                :label               title
+                :on-press            #(on-tab-press (get routes-map nav-stack))
+                :accessibility-label accessibility-label
+                :count-subscription  count-subscription
+                :active?             (= (str index)
+                                        (oget (get routes-map nav-stack) "index"))
+                :nav-stack           nav-stack}])]]]
+         [react/view
+          {:style (tabs.styles/ios-titles-cover inset)}]]))))
 
-(defn tabs-animation-wrapper-ios
-  [content]
-  [react/view {:style tabs.styles/title-cover-wrapper-ios}
-   [react/view
-    content
-    (when platform/iphone-x?
-      [react/view
-       {:style tabs.styles/ios-titles-cover}])]])
-
-(defn tabs-animation-wrapper-android
-  [keyboard-shown? view-id content]
-  [react/view
-   {:style (tabs.styles/animation-wrapper
-            keyboard-shown?
-            (main-tab? view-id))}
-   [react/view
-    {:style tabs.styles/title-cover-wrapper-android}
-    content]])
-
-(defn tabs-animation-wrapper [keyboard-shown? view-id tab]
-  (reagent.core/create-class
-   {:component-will-update
-    (fn [this new-params]
-      (let [old-view-id (get (.-argv (.-props this)) 2)
-            new-view-id (get new-params 2)]
-        (when (not= new-view-id old-view-id)
-          (minimize-bar new-view-id))))
-    :reagent-render
-    (fn [keyboard-shown? view-id tab]
-      (when-not (contains? #{:enter-pin-login
-                             :enter-pin-sign
-                             :enter-pin-settings} view-id)
-        (case platform/os
-          "ios" [tabs-animation-wrapper-ios
-                 [react/animated-view
-                  {:style (tabs.styles/animated-container visible? keyboard-shown?)}
-                  [tabs tab]]]
-          "android" [tabs-animation-wrapper-android
-                     keyboard-shown?
-                     view-id
-                     [react/animated-view
-                      {:style (tabs.styles/animated-container visible? keyboard-shown?)}
-                      [tabs tab]]]
-          "desktop"
-          [tabs-animation-wrapper-android
-           keyboard-shown?
-           view-id
-           [react/animated-view
-            {:style (tabs.styles/animated-container visible? keyboard-shown?)}
-            [tabs tab]]])))}))
-
-(def disappearance-duration 150)
-(def appearance-duration 100)
-
-(defn tabbar [_ view-id]
-  (let [keyboard-shown? (reagent/atom false)
-        listeners       (atom [])]
-    (reagent/create-class
-     {:component-did-mount
-      (fn []
-        (when platform/android?
-          (reset!
-           listeners
-           [(.addListener react/keyboard  "keyboardDidShow"
-                          (fn []
-                            (reset! keyboard-shown? true)
-                            (animate visible?
-                                     disappearance-duration 0)))
-            (.addListener react/keyboard  "keyboardDidHide"
-                          (fn []
-                            (reset! keyboard-shown? false)
-                            (animate visible? appearance-duration
-                                     (if (main-tab? @view-id)
-                                       1
-                                       tabs.styles/minimized-tab-ratio))))])))
-      :component-will-unmount
-      (fn []
-        (when (not-empty @listeners)
-          (doseq [listener @listeners]
-            (when listener
-              (.remove listener)))))
-      :reagent-render
-      (fn [args view-id]
-        (let [idx (.. (:navigation args)
-                      -state
-                      -index)
-              tab (case idx
-                    0 :chat-stack
-                    1 :browser-stack
-                    2 :wallet-stack
-                    3 :profile-stack
-                    :chat-stack)]
-          [tabs-animation-wrapper @keyboard-shown? @view-id tab]))})))
+(defn tabbar [props]
+  (let [on-tab-press    (oget props "onTabPress")
+        routes          (oget props "navigation" "state" "routes")
+        index           (oget props "navigation" "state" "index")]
+    (reagent/as-element
+     [react/safe-area-consumer
+      (fn [insets]
+        (reagent/as-element
+         [tabs {:on-tab-press    on-tab-press
+                :routes          routes
+                :index           index
+                :inset           (oget insets "bottom")}]))])))
