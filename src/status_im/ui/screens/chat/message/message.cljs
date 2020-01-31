@@ -14,7 +14,7 @@
             [status-im.ui.components.react :as react]
             [status-im.utils.money :as money]
             [status-im.ethereum.transactions.core :as transactions]
-            [status-im.ui.screens.chat.message.sheets :as sheets]
+            [status-im.ui.screens.chat.sheets :as sheets]
             [status-im.ui.screens.chat.photos :as photos]
             [status-im.ui.screens.chat.styles.message.message :as style]
             [status-im.ui.screens.chat.utils :as chat.utils]
