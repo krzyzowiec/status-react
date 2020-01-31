@@ -127,7 +127,6 @@
     group-chat [group-chat-actions current-chat]
     :else      [chat-actions current-chat]))
 
-
 (defn options [chat-id message-id]
   (fn []
     [react/view
@@ -148,33 +147,33 @@
 (defn message-long-press [{:keys [message-id content identicon from] :as message}]
   (fn []
     (let [{:keys [ens-name alias]} @(re-frame/subscribe [:contacts/contact-name-by-identity from])]
-     [react/view
-      [list-item/list-item
-       {:theme               :action
-        :icon                (multiaccounts/displayed-photo {:identicon  identicon
-                                                             :public-key from})
-        :title               [view-profile {:name   (or ens-name alias)
-                                            :helper :t/view-profile}]
-        :accessibility-label :view-chat-details-button
-        :accessories         [:chevron]
-        :on-press            #(hide-sheet-and-dispatch  [:chat.ui/show-profile from])}]
-      [list-item/list-item
-       {:theme    :action
-        :title    :t/message-reply
-        :icon     :main-icons/reply
-        :on-press #(hide-sheet-and-dispatch [:chat.ui/reply-to-message message-id])}]
-      [list-item/list-item
-       {:theme    :action
-        :title    :t/sharing-copy-to-clipboard
-        :icon     :main-icons/copy
-        :on-press (fn []
-                    (re-frame/dispatch [:bottom-sheet/hide-sheet])
-                    (react/copy-to-clipboard (:text content)))}]
-      (when-not platform/desktop?
-        [list-item/list-item
-         {:theme    :action
-          :title    :t/sharing-share
-          :icon     :main-icons/share
-          :on-press (fn []
-                      (re-frame/dispatch [:bottom-sheet/hide-sheet])
-                      (list-selection/open-share {:message (:text content)}))}])])))
+      [react/view
+       [list-item/list-item
+        {:theme               :action
+         :icon                (multiaccounts/displayed-photo {:identicon  identicon
+                                                              :public-key from})
+         :title               [view-profile {:name   (or ens-name alias)
+                                             :helper :t/view-profile}]
+         :accessibility-label :view-chat-details-button
+         :accessories         [:chevron]
+         :on-press            #(hide-sheet-and-dispatch  [:chat.ui/show-profile from])}]
+       [list-item/list-item
+        {:theme    :action
+         :title    :t/message-reply
+         :icon     :main-icons/reply
+         :on-press #(hide-sheet-and-dispatch [:chat.ui/reply-to-message message-id])}]
+       [list-item/list-item
+        {:theme    :action
+         :title    :t/sharing-copy-to-clipboard
+         :icon     :main-icons/copy
+         :on-press (fn []
+                     (re-frame/dispatch [:bottom-sheet/hide-sheet])
+                     (react/copy-to-clipboard (:text content)))}]
+       (when-not platform/desktop?
+         [list-item/list-item
+          {:theme    :action
+           :title    :t/sharing-share
+           :icon     :main-icons/share
+           :on-press (fn []
+                       (re-frame/dispatch [:bottom-sheet/hide-sheet])
+                       (list-selection/open-share {:message (:text content)}))}])])))

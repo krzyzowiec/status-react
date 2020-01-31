@@ -64,6 +64,7 @@
              :new-opacity-value 0
              :duration          cancellation-animation-duration
              :callback          #(do (reset! show-sheet? false)
+                                     (animation/set-value bottom-value height)
                                      (when (fn? callback) (callback)))})))
 
 (defn- on-release
