@@ -77,9 +77,6 @@
     :online-view            styles/online-view
     :online-dot-left        styles/online-dot-left
     :online-dot-right       styles/online-dot-right
-    :pending-wrapper        styles/pending-wrapper
-    :pending-outer-circle   styles/pending-outer-circle
-    :pending-inner-circle   styles/pending-inner-circle
     :size                   40
     :chat-icon              styles/chat-icon-chat-list
     :default-chat-icon      (styles/default-chat-icon-chat-list color)
