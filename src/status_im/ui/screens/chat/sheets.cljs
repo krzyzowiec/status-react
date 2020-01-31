@@ -144,19 +144,20 @@
        :accessibility-label :delete-transaction-button
        :on-press            #(hide-sheet-and-dispatch [:chat.ui/delete-message chat-id message-id])}]]))
 
-(defn message-long-press [{:keys [message-id content identicon from] :as message}]
+(defn message-long-press [{:keys [message-id content identicon from outgoing]}]
   (fn []
     (let [{:keys [ens-name alias]} @(re-frame/subscribe [:contacts/contact-name-by-identity from])]
       [react/view
-       [list-item/list-item
-        {:theme               :action
-         :icon                (multiaccounts/displayed-photo {:identicon  identicon
-                                                              :public-key from})
-         :title               [view-profile {:name   (or ens-name alias)
-                                             :helper :t/view-profile}]
-         :accessibility-label :view-chat-details-button
-         :accessories         [:chevron]
-         :on-press            #(hide-sheet-and-dispatch  [:chat.ui/show-profile from])}]
+       (when-not outgoing
+         [list-item/list-item
+          {:theme               :action
+           :icon                (multiaccounts/displayed-photo {:identicon  identicon
+                                                                :public-key from})
+           :title               [view-profile {:name   (or ens-name alias)
+                                               :helper :t/view-profile}]
+           :accessibility-label :view-chat-details-button
+           :accessories         [:chevron]
+           :on-press            #(hide-sheet-and-dispatch  [:chat.ui/show-profile from])}])
        [list-item/list-item
         {:theme    :action
          :title    :t/message-reply
