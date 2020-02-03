@@ -9,4 +9,5 @@
                          :on-press #(do (re-frame/dispatch [:bottom-sheet/hide])
                                         (re-frame/dispatch [:multiaccounts.create.ui/intro-wizard false]))
                          :icon     :main-icons/add
+                         :accessibility-label :generate-a-new-key
                          :title    :t/generate-a-new-key}]])

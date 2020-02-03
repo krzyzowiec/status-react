@@ -52,6 +52,7 @@
                      :navigation   :none
                      :title        (i18n/label :t/your-keys)
                      :accessories  [{:icon    :more
+                                     :accessibility-label :your-keys-more-icon
                                      :handler #(re-frame/dispatch [:bottom-sheet/show-sheet {:content sheets/actions-sheet}])}]}]
      [react/view styles/multiaccounts-container
       [react/view styles/multiaccounts-list-container
